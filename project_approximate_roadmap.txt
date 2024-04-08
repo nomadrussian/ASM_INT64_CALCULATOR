@@ -1,0 +1,34 @@
+[v] 1. Read an expression from input into exp_buff
+[v] 2. Check the format:
+    1) Check if 0 byte is '-' or '0'-'9', save in min1flag, if 'q' or 'Q' then quit, else FAIL
+    3) Go from byte min1flag till find op_byte (if it's '+', '-', '*', '/' or ':', '^'), 
+       checking if all are digits, if not - instant FAIL
+       if op_byte index is not in range (1-19)+min1flag then also FAIL
+    5) Check if op_byte+1 is '-' or '0'-'9', save in min2flag, else FAIL
+    6) exp_len must be in range op_byte+min2flag+3, else FAIL
+    7) Go from byte op_byte+1+min2flag to op_byte+1+min2flag+18 and check if all are digits, else FAIL
+    8) RETURN, operands' signs are in ah and operation index in al
+[v] 3. Parse operands and operationi
+    1) Load signs and operation info to r15w
+    2) Go from min1flag to op_byte-1 parsing it into decimal by multiplying by 10 and adding next digit
+    3) Check its sign stored in r15w, if negative then neg rax
+    4) Save it into operand1 address
+    5) Save op_byte into operantion address
+    6) Go from op_byte+1 to exp_len-2 parsing it into decimal by multiplying by 10 and adding next digit
+    7) Check its sign stored in r15w, if negative then neg rax
+    8) Save it into operand1 address and RETURN
+[v] 4. Calculate
+    1) Read operation
+    2) Calculate
+    3) Return the result in rax, tf operation is division, then save remainder in rdx, otherwise clear rdx
+[v] 5. Convert the result into string format
+    1) Calculate decimal lengthA of the argument gotten from rax
+    2) From lengthA-1 to 0 wirte remainder from division rax by 10 into exp_buff till rax is zero
+    3) If the argument gotten from rdx is 0, then write 0 into lengthA and RETURN
+    4) Else calculate decimal lengthD of the argument gotten from rdx
+    5) Write from lengthA to lengthA+10 'remainder: '
+    6) Write from lengthA+10+lengthD to lengthA+11 write remainder from division rdx by 10 till rdx is zero
+    7) Write 10 into lengthA+11+lengthD, 0 into lengthA+12+lengthD and RETURN
+    8) Do something similar for the remainder if it exists
+[v] 6. Print out the result string exp_buff
+[v] 7. jmp near _start
