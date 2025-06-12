@@ -1,26 +1,24 @@
-; main.asm - 08.04.2024
+; main.asm - 12.06.2025
+;
+; -----------------------------------------------
+; | The main module of the INT64 CLI Calculator |
+; -----------------------------------------------
+;
 
 
+; extern .data
+extern errmsg_0division
+extern errmsg_0d_len
+extern errmsg_wrong_expression 
+extern errmsg_we_len 
+
+; extern .text
 extern calculate
 extern readstr
 extern prtstr
 extern linelen
 extern write_digits
-extern calculate_unsigned_decimal_length
-
-
-global _start
-
-extern errmsg_0division
-extern errmsg_0d_len
-
-
-section .data
-errmsg_wrong_expression db "FATAL ERROR: WRONG EXPRESSION FORMAT, COULDN'T READ THE ", \
-"EXPRESSION", 10, "PLEASE TRY AGAIN, IT ACCEPTS TWO(!) 64-bit ", \
-"WHOLE OPERANDS AND", 10, "'+', '-', '/'(':'), NATURAL '^' OPERATIONS!!!!!!!!!!!", \
-10, 0
-errmsg_we_len equ $-errmsg_wrong_expression
+extern calc_unsigned_dec_len
 
 
 section .bss
@@ -30,15 +28,21 @@ operand2 resq 1
 operation resq 1
 
 
+; ---------------
+; | ENTRY POINT |
+; ---------------
+global _start
 section .text
 _start:
+        ; step 1: check if the expression matches the correct format
         push exp_buff
         call readstr
         call check_exp_format
         add rsp, 8
-        test rax, rax           ; 0 means wrong format
-        jz near _start
+        test rax, rax               ; 0 means wrong format
+        jz short _start             ; if wrong format, try again
 
+        ; step 2: parsing the expression
         push rax
         push qword operation
         push qword operand2
@@ -47,6 +51,7 @@ _start:
         call parse_exp
         add rsp, 40
 
+        ; step 3: calculating
         push qword operation
         push qword operand2
         push qword operand1
@@ -55,23 +60,29 @@ _start:
         cmp rcx, -1
         jz near _start
 
+        ; step 4: saving the result to RAM
         push exp_buff
         push rdx
         push rax
         call write_result
         add rsp, 24
 
+        ; step 5: calculating the total length or the result
+        ; after converting it into a string
         push exp_buff
         call linelen
         add rsp, 8
         inc rax
 
+        ; step 6: printing out the result
         push rax
         push exp_buff
-        call prtstr
+        call prtstr                 ; print the result
         add rsp, 16
 
-        jmp near _start
+        jmp near _start             ; next expression
+; ----------------------------------
+
 
 ; converting the result to a string
 ; arg1: number
@@ -84,35 +95,35 @@ write_result:
         push rdi
         push r10
 
-        mov rax, [rbp+16]
+        mov rax, [rbp+16]           ; load the result number
         xor rcx, rcx
         xor rdx, rdx
         mov rdi, [rbp+32]
-        mov r10, 10             ; for ten
-        test rax, rax
-        jns near .calculate_length
-        mov byte [rdi], "-"
+        mov r10, 10                 ; for ten
+        test rax, rax               ; check if the number is negative
+        jns short .calculate_length
+        mov byte [rdi], "-"         ; if it is, then start with '-'
         inc rdi
-        neg rax
-
+        neg rax                     ; and then treat is a positive
+        ; btw that's why it's negative limit is -(2^63-1), not -2^63
 .calculate_length:
         push rdx
         push rcx
         push rax
-        call calculate_unsigned_decimal_length
+        call calc_unsigned_dec_len  ; get the number of digits to write
         add rsp, 8
         pop rcx
         pop rdx
 
         mov rcx, rax
-        cmp rcx, 0
-        jnz near .skip_zero_adjustment
+        cmp rcx, 0                  ; if the length is zero, it still takes 1 byte
+        jnz short .skip_zero_adjustment
         inc rcx
 
 .skip_zero_adjustment:
         mov rax, [rbp+16]
         test rax, rax
-        jns near .write_digits
+        jns short .write_digits
         neg rax
 
 .write_digits:
@@ -120,48 +131,47 @@ write_result:
         push rcx
         push rdi
         push rax
-        call write_digits
+        call write_digits           ; write the digits of the result to RAM as a string
         add rsp, 16
         pop rcx
         pop rdx
-        jmp near .check_remainder
 
-.check_remainder:
+        ; now dealing with the remainder
         add rdi, rcx
-        mov rax, [rbp+24]       ; division remainder check
-        test rax, rax
+        mov rax, [rbp+24]           ; division remainder check
+        test rax, rax               ; if it's equal to 0, then print nothing else
         jz near .q
-        mov byte [rdi], " "
+        mov byte [rdi], " "         ; else print it in round brackets after a space
         inc rdi
         mov byte [rdi], "("
         inc rdi
 
-        test rax, rax
-        jns near .calculate_remainder_length
-        neg rax
-        mov byte [rdi], "-"
-        inc rdi
+        test rax, rax               ; now check if the remainder is negative
+        jns short .calc_rem_len
+        neg rax                     ; if it is, then treat is as positive
+        mov byte [rdi], "-"         ; but first write '-'
+        inc rdi                     ; one character left (after '-')
 
-.calculate_remainder_length:
+.calc_rem_len:
         push rax
-        call calculate_unsigned_decimal_length
+        call calc_unsigned_dec_len  ; get the remainder's length in digits
         mov rcx, rax
         pop rax
 
         push rcx
         push rdi
         push rax
-        call write_digits
+        call write_digits           ; append the remainder digits
         pop rax
         pop rdi
         pop rcx
  
         add rdi, rcx
-        mov byte [rdi], ")"
+        mov byte [rdi], ")"         ; close the round bracket
         inc rdi
         xor rcx, rcx
 .q:
-        mov byte [rdi], 10
+        mov byte [rdi], 10          ; append '\n' (end of line)
     
         pop r10
         pop rdi
@@ -169,6 +179,7 @@ write_result:
         mov rsp, rbp
         pop rbp
         ret 
+; ----------------------------------
 
 
 ; parsing the expression
@@ -218,7 +229,7 @@ parse_exp:
         inc rcx
         cmp rcx, r8
         jz .finishoperand1
-        jmp .parsedigit1
+        jmp short .parsedigit1
 .finishoperand1:
         test r9, r9
         jz .skipnegating1
@@ -272,6 +283,7 @@ parse_exp:
         mov rsp, rbp
         pop rbp
         ret
+;-----------------------------------
 
 
 ; checking if the expression format is valid
@@ -339,13 +351,13 @@ check_exp_format:
 
 .foundsub:
         inc al
-        jmp near .closefound
+        jmp short .closefound
 .foundmul:
         add al, 2
-        jmp near .closefound
+        jmp short .closefound
 .founddiv:
         add al, 3
-        jmp near .closefound
+        jmp short .closefound
 .foundpow:
         add al, 4
 .closefound:
@@ -359,12 +371,12 @@ check_exp_format:
         xor cl, cl
         mov bl, [rsi]           ; now checking the first byte of operand2
         cmp bl, "-"
-        jz .setminus2flag
+        jz short .setminus2flag
         cmp bl, "0"
         jl near .q_err
         cmp bl, "9"
         jg near .q_err
-        jmp .skipminus2flag
+        jmp short .skipminus2flag
 .setminus2flag:
         cmp al, 4              ; check if power operation
         jz .q_err              ; it must have positive exponent
@@ -387,10 +399,10 @@ check_exp_format:
         cmp bl, 10
         jz .q
         cmp bl, "0"
-        jl .q_err
+        jl short .q_err
         cmp bl, "9"
         jg .q_err
-        jmp .seekfortheend
+        jmp short .seekfortheend
 
 .q_err:
         push qword errmsg_we_len
@@ -407,6 +419,7 @@ check_exp_format:
 .q_exit:
         push qword 0
         call _exit
+; ----------------------------------
 
 
 ; exiting program
@@ -415,3 +428,5 @@ _exit:
         mov rax, 60
         mov rdi, [rsp+8]
         syscall
+; ----------------------------------
+

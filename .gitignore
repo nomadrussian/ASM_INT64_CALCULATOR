@@ -1,5 +1,5 @@
-compile
-compile_debug
+bin/
+bin_debug
 run
 debug
- 
+
