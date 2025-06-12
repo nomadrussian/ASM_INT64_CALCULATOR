@@ -1,20 +1,20 @@
 # INT64 CLI Calculator
 
-INT64 CLI Calculator is a lightweight x86-64 calculator with command-line interface, which is capable of handling 4 integer operations:  
-    + (addition)  
-    - (subtraction)  
-    * (multiplication)  
-    / (integer division, it is possible to use ':' instead)  
-    ^ (natural power)  
+__INT64 CLI Calculator__ is a lightweight x86-64 calculator with command-line interface, which is capable of handling 4 integer operations:  
+&nbsp;__+__ _(addition)_  
+&nbsp;__-__ _(subtraction)_  
+&nbsp;__*__ _(multiplication)_  
+&nbsp;__/__ _(integer division, it is possible to use '___:___' instead)_  
+&nbsp;__^__ _(natural power)_  
 
 ## Installation
 
-0. Make sure you have installed:
-    Netwide Assembler (NASM)  
-    GNU Linker (ld)  
-    GNU Make (make)  
-If you want to debug:  
-    GNU Debugger (gdb)  
+0. Make sure you have installed:  
+&nbsp;__Netwide Assembler__ (___nasm___)  
+&nbsp;__GNU Linker__ (___ld___)  
+&nbsp;__GNU Make__ (___make___)  
+
+If you want to debug, also make sure you have __GNU Debugger__ (___gdb___) on your computer.
 
 1. Clone the repository:  
 
@@ -22,64 +22,71 @@ If you want to debug:
 git clone https://github.com/nomadrussian/INT64_CLI_Calculator
 ```
 
-2. Use "Make" utility to compile the project:
+2. Use __Make__ utility to compile the project:
 
 ```bash
 make bin
 ```
 
-3. If you want to use gdb, compile the debug version (with debug info):
+3. If you want to use __GDB__, compile the debug version (with debug info):
 
 ```bash
 make dbg
 ```
 
-4. You can compile both by just calling "Make":
+4. You can compile both by just calling __Make__ without arguments:
 
 ```bash
 make
 ```
 
-5. To run INT64 CLI Calculator:
+5. To run __INT64 CLI Calculator__:
 
 ```bash
 ./run
 ```
 
-6. To debug you must have GNU Debugger installed, then just run:
+6. To debug you must have __GNU Debugger__ installed, then just run:
 
 ```bash
 ./debug
 ```
 
+7. If you wanna clean the build, also use __Make__:
+```bash
+make clean_bin            # cleans what was built through $ make bin
+make clean_debug          # cleans what was built through $ make dbg
+make clean                # cleans both
+```
+
 ## Usage
 
-After having INT64 CLI Calculator launched, simply type in you two operands and the operation between them.
-For example, this is how you can divide 563 by -65:
+After having __INT64 CLI Calculator__ launched, simply type in you two operands and the operation between them.
+For example, this is how you can divide _563_ by _-65_:
 
 ```bash
 563/-65
 ```
-Then press [Enter], and you'll get the result: -8 and the remainder -43 in the round brackets.
+Then press __[Enter]__, and you'll get the result: _-8_ and the remainder _-43_ in the round brackets.
 ```bash
 563/-65 
 -8 (43)
 ```
 
-Or, e.g., the power:
+Or, for example, this is how natural powers are calculated:
 ```bash
 15^4
 ```
-and you'll get:
+The result is:
 ```bash
 15^4
 50625
 ```
 
-The calculator is capable of operating with numbers from –9223372036854775807 (-(2^63-1)) up to 9223372036854775807 (2^63-1).
-In case of overflow the result is undefined.
+The calculator is capable of operating with numbers from _–9223372036854775807_ (_-(2^63-1)_) up to _9223372036854775807_ (_2^63-1_).
+__In case of overflow the result is undefined__.
 
-When ready to quit, type in 'q' or 'Q' and [Enter] to finish:
+When ready to quit, type in '__q__' or '__Q__' and press __[Enter]__ to finish:
 ```bash
 q
 ```
